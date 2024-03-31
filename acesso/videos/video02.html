@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vídeo com Thumbnail</title>
+<style>
+  .video-container {
+    width: 100%;
+    height: 350px;
+    overflow: hidden;
+    position: relative;
+  }
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .video-thumbnail {
+    position: absolute;
+    top: 15%;
+    left: 15%;
+    width: 70%;
+    height: 70%;
+    cursor: pointer;
+    background: url('https://i.imgur.com/F03OlyE.jpeg') center center no-repeat;
+    background-size: cover;
+    transform: scale(1);
+	animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+	0% {
+		transform: scale(0.95);
+		box-shadow: 0 0 0 0 rgba(207, 47, 116, 0.7);
+	}
+
+	70% {
+		transform: scale(1);
+		box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+	}
+
+	100% {
+		transform: scale(0.95);
+		box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+	}
+}
+</style>
+</head>
+<body>
+
+<div class="video-container" onclick="unmuteVideo()">
+  <video id="myVideo" autoplay muted loop>
+    <source src="https://resgateliberado.fun/videos/video01.mp4" type="video/mp4">
+    Seu navegador não suporta vídeos incorporados.
+  </video>
+  <div id="videoThumbnail" class="video-thumbnail"></div>
+</div>
+
+<script>
+  function unmuteVideo() {
+    var video = document.getElementById('myVideo');
+    var thumbnail = document.getElementById('videoThumbnail');
+    if (video.muted) {
+      video.muted = false;
+      video.currentTime = 0;
+      video.play();
+      thumbnail.style.display = 'none'; // Esconde a thumbnail
+    }
+  }
+</script>
+
+</body>
+</html>
